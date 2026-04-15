@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk &amp; remarks — CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --crm-accent: #2563eb;
+            --crm-accent-hover: #1d4ed8;
+            --crm-sidebar: #0f172a;
+            --crm-sidebar-light: #1e293b;
+        }
+        body {
+            font-family: "DM Sans", system-ui, sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background: var(--crm-sidebar);
+            color: white;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .sidebar .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            padding: 0.5rem;
+        }
+        .sidebar .logo span:first-child {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        .sidebar .nav-link {
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            display: block;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: var(--crm-sidebar-light);
+            color: white;
+        }
+        .sidebar .nav-link.active {
+            background: var(--crm-accent);
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 1rem;
+        }
+        .page-title {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+        }
+        .card-crm {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        .card-crm .card-header {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem 1rem 0 0 !important;
+        }
+        .btn-crm-primary {
+            background: var(--crm-accent);
+            border-color: var(--crm-accent);
+            font-weight: 600;
+        }
+        .btn-crm-primary:hover {
+            background: var(--crm-accent-hover);
+            border-color: var(--crm-accent-hover);
+        }
+        .table-crm thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .history-item {
+            border-left: 3px solid var(--crm-accent);
+        }
+        .table-responsive-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <span>C</span>
+            <span style="font-weight: 700;">CRM</span>
+        </div>
+        <nav>
+            <a href="/crm" class="nav-link">Customers</a>
+            <a href="/crm/history" class="nav-link active">Talk & remarks</a>
+            <a href="/admin" class="nav-link">Admin</a>
+            <button type="button" class="nav-link" style="border: none; background: none; width: 100%; text-align: left;" onclick="logout()">Log out</button>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="mb-4">
+            <h1 class="page-title h3 mb-1">Talk &amp; remarks</h1>
+            <p class="text-muted small mb-0">Search for a customer, open their record, then view past notes and save new remarks.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card card-crm">
+                    <div class="card-header">Find customer</div>
+                    <div class="card-body p-4">
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-8 col-lg-7">
+                                <label class="form-label small text-secondary mb-1">Search by name or phone</label>
+                                <input type="search" class="form-control" id="search" placeholder="Type a name or phone number…">
+                            </div>
+                            <div class="col-md-4 col-lg-5">
+                                <button type="button" class="btn btn-outline-secondary w-100" onclick="loadCustomers()">Search</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-3">If exactly one customer matches, they are selected automatically. Otherwise click <strong>Open</strong> on a row.</p>
+                        <div id="status" class="alert py-2 small mb-3 d-none" role="alert"></div>
+                        <div class="table-responsive-wrap border rounded-3 bg-white">
+                            <table class="table table-hover table-crm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">ID</th>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Who to talk</th>
+                                        <th class="text-end pe-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="card card-crm">
+                    <div class="card-header">History &amp; new remark</div>
+                    <div class="card-body p-4">
+                        <div id="historyEmpty" class="text-muted small">
+                            Select a customer above (search with one match, or click <strong>Open</strong>).
+                        </div>
+                        <div id="historyContent" class="d-none">
+                            <p class="small mb-3"><span class="text-secondary">Selected:</span> <span id="historyCustomerName" class="fw-semibold"></span></p>
+                            <label class="form-label small text-secondary mb-1">Past entries</label>
+                            <div id="historyList" class="list-group small border rounded mb-4" style="max-height: 360px; overflow-y: auto;"></div>
+                            <h6 class="small fw-bold text-secondary mb-2">Add remark</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1" for="histTalkedWith">Talked with</label>
+                                    <input type="text" class="form-control" id="histTalkedWith" placeholder="Who you spoke with">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1" for="histDate">Date</label>
+                                    <input type="date" class="form-control" id="histDate">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small text-secondary mb-1" for="histRemark">Remark</label>
+                                    <textarea class="form-control" id="histRemark" rows="3" placeholder="Notes from this conversation…"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-crm-primary text-white" onclick="saveInteraction()">Save remark</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script>
+        const API = window.location.origin;
+        const token = localStorage.getItem("token");
+        const statusBox = document.getElementById("status");
+        const customerCache = {};
+        let selectedCustomerId = null;
+
+        if (!token) {
+            window.location.href = "/";
+        }
+
+        function todayISO() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        function authHeaders() {
+            return {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            };
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "/";
+        }
+
+        function setStatus(message, isError = true) {
+            if (!message) {
+                statusBox.classList.add("d-none");
+                statusBox.textContent = "";
+                return;
+            }
+            statusBox.classList.remove("d-none", "alert-danger", "alert-success", "alert-info");
+            statusBox.classList.add(isError ? "alert-danger" : "alert-success");
+            statusBox.textContent = message;
+        }
+
+        function escapeHtml(str) {
+            return String(str == null ? "" : str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        }
+
+        function formatApiError(data) {
+            if (!data || data.detail == null) return "Request failed";
+            const d = data.detail;
+            if (typeof d === "string") return d;
+            if (Array.isArray(d)) {
+                const first = d[0];
+                if (first && first.msg) return first.loc ? first.loc.join(".") + ": " + first.msg : first.msg;
+                return JSON.stringify(d);
+            }
+            if (typeof d === "object") return d.msg || JSON.stringify(d);
+            return String(d);
+        }
+
+        async function parseResponse(res) {
+            const raw = await res.text();
+            if (!raw) return {};
+            try {
+                return JSON.parse(raw);
+            } catch {
+                return { detail: raw };
+            }
+        }
+
+        function clearHistoryPanel() {
+            selectedCustomerId = null;
+            document.getElementById("historyEmpty").classList.remove("d-none");
+            document.getElementById("historyContent").classList.add("d-none");
+            document.getElementById("historyList").innerHTML = "";
+            document.getElementById("histTalkedWith").value = "";
+            document.getElementById("histDate").value = "";
+            document.getElementById("histRemark").value = "";
+        }
+
+        async function loadHistoryList() {
+            if (selectedCustomerId == null) return;
+            const listEl = document.getElementById("historyList");
+            listEl.innerHTML = '<div class="p-3 text-muted small">Loading…</div>';
+            try {
+                const res = await fetch(API + "/customers/" + selectedCustomerId + "/interactions", {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+                const data = await parseResponse(res);
+                if (res.status === 401 || res.status === 403) {
+                    logout();
+                    return;
+                }
+                if (!res.ok) {
+                    listEl.innerHTML = '<div class="p-3 text-danger small">' + escapeHtml(formatApiError(data)) + "</div>";
+                    return;
+                }
+                if (!data.length) {
+                    listEl.innerHTML = '<div class="p-3 text-muted small">No history yet. Add a remark below.</div>';
+                    return;
+                }
+                listEl.innerHTML = data.map(function (item) {
+                    const remarkHtml = item.remark
+                        ? escapeHtml(item.remark).replace(/\n/g, "<br>")
+                        : '<span class="fst-italic">No remark</span>';
+                    return (
+                        '<div class="list-group-item history-item py-2 px-3">' +
+                        '<div class="d-flex justify-content-between gap-2 mb-1">' +
+                        '<span class="fw-semibold">' + escapeHtml(item.talked_with || "—") + "</span>" +
+                        '<span class="text-muted text-nowrap">' + escapeHtml(item.interaction_date || "") + "</span>" +
+                        "</div>" +
+                        '<div class="text-secondary">' + remarkHtml + "</div>" +
+                        '<div class="text-muted mt-1" style="font-size:0.7rem;">Saved: ' + escapeHtml(item.created_at || "") + "</div>" +
+                        "</div>"
+                    );
+                }).join("");
+            } catch (e) {
+                listEl.innerHTML = '<div class="p-3 text-danger small">Failed to load history</div>';
+            }
+        }
+
+        async function selectCustomerForHistory(id, name, defaultContact) {
+            selectedCustomerId = id;
+            document.getElementById("historyEmpty").classList.add("d-none");
+            document.getElementById("historyContent").classList.remove("d-none");
+            document.getElementById("historyCustomerName").textContent = name || ("#" + id);
+            document.getElementById("histTalkedWith").value = defaultContact || "";
+            document.getElementById("histDate").value = todayISO();
+            document.getElementById("histRemark").value = "";
+            await loadHistoryList();
+        }
+
+        function openHistory(customerId) {
+            const meta = customerCache[customerId];
+            const name = meta ? meta.name : ("Customer " + customerId);
+            const contact = meta && meta.contact_person ? meta.contact_person : "";
+            selectCustomerForHistory(customerId, name, contact);
+            document.getElementById("historyContent").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        async function saveInteraction() {
+            if (selectedCustomerId == null) {
+                setStatus("Select a customer first.");
+                return;
+            }
+            const talked = document.getElementById("histTalkedWith").value.trim();
+            const idate = document.getElementById("histDate").value;
+            const remark = document.getElementById("histRemark").value.trim();
+
+            if (!talked || !idate) {
+                setStatus("Talked with and date are required.");
+                return;
+            }
+
+            try {
+                const res = await fetch(API + "/customers/" + selectedCustomerId + "/interactions", {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        talked_with: talked,
+                        interaction_date: idate,
+                        remark: remark
+                    })
+                });
+                const data = await parseResponse(res);
+                if (res.status === 401 || res.status === 403) {
+                    logout();
+                    return;
+                }
+                if (!res.ok) {
+                    setStatus(formatApiError(data) || "Failed to save remark");
+                    return;
+                }
+                setStatus("Remark saved", false);
+                document.getElementById("histRemark").value = "";
+                await loadHistoryList();
+            } catch (e) {
+                setStatus("Network error while saving remark");
+            }
+        }
+
+        async function loadCustomers() {
+            const search = document.getElementById("search").value.trim();
+            setStatus("", false);
+
+            try {
+                const res = await fetch(API + "/customers?search=" + encodeURIComponent(search), {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    logout();
+                    return;
+                }
+
+                const data = await parseResponse(res);
+                if (!res.ok) {
+                    setStatus(formatApiError(data) || "Failed to load customers");
+                    return;
+                }
+
+                const searchQuery = document.getElementById("search").value.trim();
+                const idsInResults = new Set(data.map(function (c) { return c.id; }));
+                if (selectedCustomerId != null && !idsInResults.has(selectedCustomerId)) {
+                    clearHistoryPanel();
+                }
+
+                Object.keys(customerCache).forEach(function (k) { delete customerCache[k]; });
+                data.forEach(function (c) {
+                    customerCache[c.id] = { name: c.name, contact_person: c.contact_person || "" };
+                });
+
+                let rows = "";
+                data.forEach(function (c) {
+                    rows +=
+                        "<tr>" +
+                        '<td class="ps-3 text-secondary small">' + c.id + "</td>" +
+                        "<td>" + escapeHtml(c.name) + "</td>" +
+                        "<td>" + escapeHtml(c.phone || "") + "</td>" +
+                        "<td>" + escapeHtml(c.contact_person || "") + "</td>" +
+                        '<td class="text-end pe-3">' +
+                        '<button type="button" class="btn btn-sm btn-crm-primary text-white" onclick="openHistory(' + c.id + ')">Open</button>' +
+                        "</td>" +
+                        "</tr>";
+                });
+                document.getElementById("table").innerHTML = rows;
+
+                if (data.length === 0) {
+                    statusBox.classList.remove("d-none", "alert-danger", "alert-success");
+                    statusBox.classList.add("alert-info");
+                    statusBox.textContent = "No customers found.";
+                } else {
+                    statusBox.classList.add("d-none");
+                    statusBox.textContent = "";
+                }
+
+                if (searchQuery && data.length === 1) {
+                    var c0 = data[0];
+                    selectCustomerForHistory(c0.id, c0.name, c0.contact_person || "");
+                }
+            } catch (error) {
+                setStatus("Network error while loading customers");
+            }
+        }
+
+        document.getElementById("search").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                loadCustomers();
+            }
+        });
+
+        async function bootstrap() {
+            await loadCustomers();
+            const params = new URLSearchParams(window.location.search);
+            const cid = parseInt(params.get("customer"), 10);
+            if (!isNaN(cid) && cid > 0) {
+                const meta = customerCache[cid];
+                if (meta) {
+                    await selectCustomerForHistory(cid, meta.name, meta.contact_person || "");
+                }
+            }
+        }
+
+        bootstrap();
+    </script>
+</body>
+</html>

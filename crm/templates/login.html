@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in — CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --crm-accent: #2563eb;
+            --crm-accent-hover: #1d4ed8;
+            --crm-bg: #0f172a;
+            --crm-surface: #ffffff;
+        }
+        body {
+            font-family: "DM Sans", system-ui, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #312e81 100%);
+        }
+        .auth-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+        .auth-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        }
+        .auth-brand {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--crm-accent), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        .btn-crm-primary {
+            background: var(--crm-accent);
+            border-color: var(--crm-accent);
+            font-weight: 600;
+            padding: 0.65rem 1rem;
+        }
+        .btn-crm-primary:hover {
+            background: var(--crm-accent-hover);
+            border-color: var(--crm-accent-hover);
+        }
+        .form-control:focus {
+            border-color: var(--crm-accent);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-shell">
+        <div class="container" style="max-width: 440px;">
+            <div class="card auth-card">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="auth-brand">C</div>
+                        <div>
+                            <h1 class="h4 mb-0 fw-bold">Welcome back</h1>
+                            <p class="text-muted small mb-0">Sign in to your CRM workspace</p>
+                        </div>
+                    </div>
+
+                    <div id="message" class="alert alert-danger py-2 small d-none" role="alert"></div>
+
+                    <form id="loginForm" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="email" class="form-label small fw-semibold text-secondary">Email</label>
+                            <input type="email" class="form-control form-control-lg" id="email" placeholder="you@company.com" required autocomplete="email">
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label small fw-semibold text-secondary">Password</label>
+                            <input type="password" class="form-control form-control-lg" id="password" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn btn-crm-primary btn-lg w-100 text-white">Sign in</button>
+                    </form>
+
+                    <p class="text-center text-muted small mt-4 mb-0">
+                        New here? <a href="/register" class="fw-semibold text-decoration-none">Create an account</a>
+                    </p>
+                </div>
+            </div>
+            <p class="text-center text-white-50 small mt-3 mb-0">&copy; CRM — Customer management</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script>
+        const API_URL = window.location.origin;
+        
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const messageDiv = document.getElementById("message");
+            
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (!res.ok) {
+                    messageDiv.classList.remove("d-none");
+                    messageDiv.textContent = "Invalid email or password";
+                    return;
+                }
+                
+                const data = await res.json();
+                localStorage.setItem("token", data.access_token);
+                if (data.is_admin) window.location.href = "/admin";
+                else window.location.href = "/crm";
+            } catch (error) {
+                console.error("Error:", error);
+                messageDiv.classList.remove("d-none");
+                messageDiv.textContent = "Cannot reach server. Make sure FastAPI is running.";
+            }
+        });
+    </script>
+</body>
+</html>
